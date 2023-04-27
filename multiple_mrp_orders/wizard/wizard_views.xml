@@ -47,6 +47,7 @@
             <field name="name">Check Availabilty and Produce</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">mrp.product.produce.wizard</field>
+            <field name="binding_model_id" ref="mrp.model_mrp_production"/>
             <field name="view_id" ref="view_mrp_product_availability_wizard"/>
             <field name="view_mode">form</field>
             <field name="target">new</field>
@@ -55,6 +56,7 @@
             <field name="name">Mark as Done</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">mrp.product.produce.wizard</field>
+            <field name="binding_model_id" ref="mrp.model_mrp_production"/>
             <field name="view_id" ref="view_mrp_product_done_wizard"/>
             <field name="view_mode">form</field>
             <field name="target">new</field>

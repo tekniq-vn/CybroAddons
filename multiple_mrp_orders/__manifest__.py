@@ -33,7 +33,7 @@
     'depends': ['mrp'],
     'data': [
         'security/ir.model.access.csv',
-        'views/mrp_production_views.xml',
+        #'views/mrp_production_views.xml',
         'wizard/wizard_views.xml',
             ],
     'license': 'AGPL-3',

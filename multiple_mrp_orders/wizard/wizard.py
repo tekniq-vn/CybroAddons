@@ -20,6 +20,8 @@
 #
 #############################################################################
 from odoo import models, fields, api, _
+import logging
+_logger = logging.getLogger(__name__)
 
 
 class MrpProductWizard(models.TransientModel):
@@ -28,20 +30,34 @@ class MrpProductWizard(models.TransientModel):
     produce_line_ids = fields.One2many('mrp.product.produce.wizard.line', 'product_produce_id',
                                        string='Product to Track')
 
+    @api.model
+    def default_get(self, fields):
+        res = super().default_get(fields)
+        production_ids = self.env['mrp.production'].browse(self._context.get('active_ids', False))
+        lines = []
+        res["produce_line_ids"] = [(0, 0, {
+            'production_id': line.id,
+            'product_id': line.product_id.id,
+            'qty': line.product_qty - line.qty_produced
+        }) for line in production_ids]
+        return res
+
+
     # Method to check availability and produce the products for mrp orders
     def action_check_availability_produce(self):
-        for line in self.produce_line_ids.mapped('production_id'):
-            line.with_context({'active_id': line.id,
-                               'active_ids': [line.id],
-                               }).action_assign()
-            for move_line in line.move_raw_ids:
-                move_line.quantity_done = move_line.product_uom_qty
+        for line in self.produce_line_ids:
+            production = line.production_id
+            production.with_context({
+                'active_id': production.id,
+                'active_ids': [production.id],
+                }).action_assign()
             produce_wizard = self.env['mrp.product.produce'].with_context({
-                'active_id': line.id,
-                'active_ids': [line.id],
-            }).create({
-                'qty_producing': line.product_qty,
+                'active_id': production.id,
+                'active_ids': [production.id],
+            }).new({
+               'qty_producing': line.qty,
             })
+            produce_wizard._onchange_qty_producing()
             produce_wizard.do_produce()
 
     # Method to mark the mrp orders as done
@@ -70,7 +86,7 @@ class MrpProduction(models.Model):
                 'target': 'new',
                 'view_id': self.env.ref('multiple_mrp_orders.view_mrp_product_availability_wizard').id,
                 'view_mode': 'form',
-                'context': {'default_produce_line_ids': lines}
+                #'context': {'default_produce_line_ids': lines}
                 }
 
     # Method for the wizard Mark as Done
@@ -90,7 +106,7 @@ class MrpProduction(models.Model):
                 'target': 'new',
                 'view_id': self.env.ref('multiple_mrp_orders.view_mrp_product_done_wizard').id,
                 'view_mode': 'form',
-                'context': {'default_produce_line_ids': lines}
+                #'context': {'default_produce_line_ids': lines}
                 }
 
 
